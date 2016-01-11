@@ -7,3 +7,5 @@ Pin Connections:
 RST --> GPIO16
 CP-PD --> Vcc via 4k7ohm resister
 DHT-22 --> GPIO2
+
+The sensor results are sent to my home MySQL server for storage and also sent to ThingSpeak so I can view the reading on my smart phone.
