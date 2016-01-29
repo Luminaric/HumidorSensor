@@ -3,24 +3,18 @@
  * The ESP8266WiFi.h library is used here.
  * This sensor is battery powered and uses the ESP12 
  * chip. The chip is put into sleep between transmissions.
+ * The DHT22 is used to get the Temp and Humidity. Battery 
+ * voltage is also sampled and transmitted to the MySQL server.
+ * The Temp and Humidity are also sent to ThingSpeak.
  * 
- * Version:   1
+ * Version:   1.2
  * SensorID:  HUMIDOR
- * Date:      01/11/16
+ * Platform:  ESP8266
+ * Date:      2016-01-22
+ * Requires:
+ * Hardware:  Uses the DHT22 Temp and Humid sensor.
  */
- /*
-This sketch uses the DHT22 to get Temprature and Humidity
-readings. It then uses the ESP8266 to transmit those readings
-to the local MySQL database. The ESP8266 is then put in sleep
-mode to conserve battery.
 
-  PGM:      ESP03
-  Platform: ESP8266
-  Ver:      1.1
-  Date:     2016-01-11
-  Requires:
-  Hardware: Uses the DHT22 Temp and Humid sensor.
-*/
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include "ethernetSettings.h"
@@ -30,17 +24,19 @@ extern "C" {
 #include "user_interface.h"
 uint16 readvdd33(void);
 }
-#define THING_SPEAK           "POST /update HTTP/1.1\n\rHost: api.thingspeak.com\n\rConnection:close\n\rX-THINGSPEAKAPIKEY: YOURKEYHERE\n\rContent-type: application/x-www-form-urlencoded\n\rContent-Length: "
-#define MYSQL_OPEN_STRING     "Get /a/add2.php?sensorID="
-#define CLOSE_STRING          "Host: 10.1.1.24 Connection: close"
+#define THING_SPEAK           "POST /update HTTP/1.1\n\rHost: api.thingspeak.com\n\rConnection:close\n\rX-THINGSPEAKAPIKEY: UMBGKCJ3ZULDV9Y2\n\rContent-type: application/x-www-form-urlencoded\n\rContent-Length: "
+#define MYSQL_OPEN_STRING     "Get /add2.php?f0="//this is the URL for the PI server
+#define CLOSE_STRING          "Host: 10.1.1.25 Connection: close"
+#define RESET_PIN             16
 #define DHTPIN                2
 #define DHTTYPE               DHT22
-#define SENSORID              "HUMIDOR"
+#define SENSORID              "HUMIDOR"//change as required
 
+uint16 x;
 float t, h;
 float v = readvdd33() / 1000.0;
 String getString;
-const unsigned long sleepTimeS = 3600;//in seconds
+const unsigned long sleepTimeS = 3600;//in seconds 3600
 const unsigned long multiplier = 1000000;//cycles for one second
 
 DHT dht(DHTPIN, DHTTYPE, 16);
@@ -66,28 +62,32 @@ void sendThingSpeak() {
       client.print("\n\n");
       client.print(getIOTString);
       client.stop();
-
+  
+    }
   }
-}
-void getData(void) {
-  float h = dht.readHumidity();
-  float t = dht.readTemperature();
-}
-void sendMySQL(void)  {
-  getString = MYSQL_OPEN_STRING;
-  getString = SENSORID;
-  getString += "&t=";
-  getString += t;
-  getString += "&h=";
-  getString += h;
-  getString += "&p=";
-  getString += v;
-  client.println (getString);
-  client.println(CLOSE_STRING);
-  client.println();
-  client.println();
-  client.stop();
-}
+  void getData(void) {
+    h = dht.readHumidity();
+    t = dht.readTemperature();
+    Serial.print("Temp ");Serial.print(t);Serial.print("|");Serial.print("Humidity ");Serial.println(h);
+  }
+  void sendMySQL(void)  {
+    getString = MYSQL_OPEN_STRING;
+    getString += SENSORID;
+    getString += "&f1=";
+    getString += t;
+    getString += "&f2=";
+    getString += h;
+    getString += "&f3=";
+    getString += 0x00;
+    getString += "&f4=";
+    getString += v;
+    Serial.println(getString);
+    client.println(getString);
+    client.println(CLOSE_STRING);
+    client.println();
+    client.println();
+    client.stop();
+  }
 void  dhtTest() {
   float h = dht.readHumidity();
   float t = dht.readTemperature();
@@ -103,6 +103,7 @@ void setup() {
   dht.begin();
   //Setup Serial and report status
   Serial.begin(9600);
+  //dhtTest();
   Serial.print("DHT using PIN: ");
   Serial.println(DHTPIN);
   //Connect Wi-Fi
@@ -110,6 +111,9 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
+    x += 1;
+    //need to add logic here in case the ESP fails to connect to
+    //Wi-Fi
   }
   Serial.println("");
   Serial.println("WiFi connected");
@@ -118,7 +122,7 @@ void setup() {
   // Use WiFiClient class to create TCP connections
   if (!client.connect(serverLH, 80)) {
     Serial.println("connection failed");
-    return;
+   return;
   } else  {
     getData();
     sendMySQL();
