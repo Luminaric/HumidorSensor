@@ -5,18 +5,20 @@
  * chip. The chip is put into sleep between transmissions.
  * The DHT22 is used to get the Temp and Humidity. Battery 
  * voltage is also sampled and transmitted to the MySQL server.
- * The Temp and Humidity are also sent to ThingSpeak.
+ * The Temp and Humidity are also sent to IO.ADAFRUIT.
  * 
- * Version:   1.2
+ * Version:   1.5
  * SensorID:  HUMIDOR
  * Platform:  ESP8266
- * Date:      2016-01-22
+ * Date:      2016-01-27
  * Requires:
- * Hardware:  Uses the DHT22 Temp and Humid sensor.
+ * Hardware:  Uses the DHT22 Temp and Humid sensor. It also
+ * uses the Adafruit IO REST API
  */
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#include "Adafruit_IO_Client.h"
 #include "ethernetSettings.h"
 #include <DHT.h>
 
@@ -24,46 +26,44 @@ extern "C" {
 #include "user_interface.h"
 uint16 readvdd33(void);
 }
-#define THING_SPEAK           "POST /update HTTP/1.1\n\rHost: api.thingspeak.com\n\rConnection:close\n\rX-THINGSPEAKAPIKEY: UMBGKCJ3ZULDV9Y2\n\rContent-type: application/x-www-form-urlencoded\n\rContent-Length: "
+
 #define MYSQL_OPEN_STRING     "Get /add2.php?f0="//this is the URL for the PI server
 #define CLOSE_STRING          "Host: 10.1.1.25 Connection: close"
-#define RESET_PIN             16
 #define DHTPIN                2
 #define DHTTYPE               DHT22
 #define SENSORID              "HUMIDOR"//change as required
 
-uint16 x;
 float t, h;
 float v = readvdd33() / 1000.0;
 String getString;
-const unsigned long sleepTimeS = 3600;//in seconds 3600
+const unsigned long sleepTimeS = 3600;//in seconds
 const unsigned long multiplier = 1000000;//cycles for one second
 
 DHT dht(DHTPIN, DHTTYPE, 16);
 //
 WiFiClient client;
 
+Adafruit_IO_Client aio = Adafruit_IO_Client(client, AIO_KEY);
+
+Adafruit_IO_Feed humidity = aio.getFeed("humidor-humidity");
+Adafruit_IO_Feed temperature = aio.getFeed("humidor-temp");
+
 void sendThingSpeak() {
-  //make the IOT string
-  String getIOTString = "field1=";
-  getIOTString += SENSORID;
-  getIOTString += "&field2=";
-  getIOTString += t*1.8+32;
-  getIOTString += "&field3=";
-  getIOTString += h;
-  getIOTString += "&field4=";
-  getIOTString += v;
-  Serial.print("iotString: ");
-  Serial.println(getIOTString);
-  //Send the data to ThingSpeak
-  if (client.connect(serverTS, 80))  { 
-      client.print(THING_SPEAK);
-      client.print(getIOTString.length());
-      client.print("\n\n");
-      client.print(getIOTString);
-      client.stop();
-  
-    }
+  char sH[7], sT[7];
+  dtostrf(h,5,1,sH);
+  dtostrf(t,5,1,sT);
+  //send Humidity
+  if(humidity.send(sH)) {
+    Serial.print(F("Wrote humidity to feed: ")); Serial.println(sH);
+  } else  {
+    Serial.println(F("Error writing value to feed!"));
+  }
+  //send Temperature
+  if(temperature.send(sT)) {
+    Serial.print(F("Wrote termperature to feed: ")); Serial.println(sT);
+  } else  {
+    Serial.println(F("Error writing value to feed!"));
+  }
   }
   void getData(void) {
     h = dht.readHumidity();
@@ -111,9 +111,6 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
-    x += 1;
-    //need to add logic here in case the ESP fails to connect to
-    //Wi-Fi
   }
   Serial.println("");
   Serial.println("WiFi connected");
@@ -122,7 +119,7 @@ void setup() {
   // Use WiFiClient class to create TCP connections
   if (!client.connect(serverLH, 80)) {
     Serial.println("connection failed");
-   return;
+    return;
   } else  {
     getData();
     sendMySQL();
@@ -130,9 +127,9 @@ void setup() {
   }
   
   delay(1000);
-  system_deep_sleep_set_option(0);
-  system_deep_sleep((sleepTimeS * multiplier) - micros());
-
+ // system_deep_sleep_set_option(0);
+ // system_deep_sleep((sleepTimeS * multiplier) - micros());
+ESP.deepSleep(60000000, WAKE_RF_DEFAULT);
 
 }
 
@@ -140,4 +137,5 @@ void loop() {
   delay(6000);
 
 }
+
 
