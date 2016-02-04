@@ -24,7 +24,8 @@ extern "C" {
 #include "user_interface.h"
 uint16 readvdd33(void);
 }
-#define THING_SPEAK           "POST /update HTTP/1.1\n\rHost: api.thingspeak.com\n\rConnection:close\n\rX-THINGSPEAKAPIKEY: JABI4GT3AMXAQ8MW\n\rContent-type: application/x-www-form-urlencoded\n\rContent-Length: "
+#define THING_SPEAK1          "POST /update HTTP/1.1\n\rHost: api.thingspeak.com\n\rConnection:close\n\rX-THINGSPEAKAPIKEY: "
+#define THING_SPEAK2          "\n\rContent-type: application/x-www-form-urlencoded\n\rContent-Length: "
 #define MYSQL_OPEN_STRING     "Get /add2.php?f0="//this is the URL for the PI server
 #define CLOSE_STRING          "Host: 10.1.1.25 Connection: close"
 #define RESET_PIN             16
@@ -57,7 +58,9 @@ void sendThingSpeak() {
   Serial.println(getIOTString);
   //Send the data to ThingSpeak
   if (client.connect(serverTS, 80))  { 
-      client.print(THING_SPEAK);
+      client.print(THING_SPEAK1);
+      client.print(THING_SPEAK_KEY);
+      client.print(THING_SPEAK2);
       client.print(getIOTString.length());
       client.print("\n\n");
       client.print(getIOTString);
@@ -69,7 +72,7 @@ void sendThingSpeak() {
     h = dht.readHumidity();
     t = dht.readTemperature();
     if (isnan(h) || isnan(t)) {
-      Serial.println("Failed to read from DHT Sensor);
+      Serial.println("Failed to read from DHT Sensor");
       /*some sort of function to log the 
        * error should exist here */
        ESP.restart();
@@ -146,5 +149,4 @@ void loop() {
   delay(6000);
 
 }
-
 

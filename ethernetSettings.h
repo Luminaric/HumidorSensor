@@ -1,3 +1,5 @@
+String THING_SPEAK_KEY  =   "KEYVALUE";
+
 const char* ssid     = "SSID";
 const char* password = "password";
 IPAddress ip(xxx,xxx,xxx,xxx);
