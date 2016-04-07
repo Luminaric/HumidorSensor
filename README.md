@@ -16,5 +16,5 @@ Updates:
 
 I first tried to switch DHT libraries. From the ESP8266.com forum posters were saying they had success with the PietteTech DHT library. The version of code that I used for that experiment I did not publish since it didn't work. 
 
-In another post I see where another poster has had success with putting the DHTPIN as an output pin and setting it to LOW.
+In another post I see where a poster has had success with putting the DHTPIN as an output pin and setting it to LOW.
 
