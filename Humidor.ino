@@ -18,7 +18,16 @@
   Totally rewritten to use MQTT.
   2016-03-30
   Modified the DHT.cpp file.  Increased the delay after
-  setting pinMode to 40 from 10
+  setting pinMode to 40 from 10 -- didn't work
+  2016-04-01
+  Switched Libraries(not saved here) from the standard
+  DHT library to the PietteTech DHT library since some
+  posters reported success with it and this problem. 
+  -- Didn't fix the problem
+  2016-04-07
+  Yet another poster reported that setting the DHTPIN
+  as an OUTPUT and setting it state to LOW before calling
+  the sleep function work.
  */
 
 #include <ESP8266WiFi.h>
@@ -33,7 +42,7 @@ uint16 readvdd33(void);
 }
 #define DHTPIN                2
 #define DHTTYPE               DHT22
-#define SENSORID              "HUMIDOR1"//change as required
+#define SENSORID              "HUMIDOR"//change as required
 
 DHT dht(DHTPIN, DHTTYPE);
 WiFiClient wireless;
@@ -49,7 +58,7 @@ bool dataFlag;
 void getData () {
   h = dht.readHumidity();
   t = dht.readTemperature(); 
-  if (!isnan(t) || !isnan(h)) {   
+  if (!isnan(t) || !isnan(h) || !h == 0 || !t == 0) {   
     Serial.print(h);Serial.print(" | ");Serial.println(t);
     dtostrf(h,4,1,humidity);
     dtostrf(t,4,1,temperatureC);
@@ -89,7 +98,13 @@ void setup() {
   /*                 Get Data             */
   /*--------------------------------------*/
   getData();
-   
+  /*--------------------------------------*/
+  /*           Put DHTPIN to LOW          */
+  /* Testing to see if DHT return values  */
+  /* after deepsleep                      */  
+  /*--------------------------------------*/
+  pinMode(DHTPIN, OUTPUT);
+  digitalWrite(DHTPIN, LOW);   
   /*--------------------------------------*/
   /*            Connect to MQTT           */
   /*--------------------------------------*/  
