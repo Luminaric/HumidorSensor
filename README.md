@@ -8,4 +8,10 @@ RST --> GPIO16
 CP-PD --> Vcc via 4k7ohm resister
 DHT-22 --> GPIO2
 
-The sensor results are sent to my home MySQL server for storage and also sent to ThingSpeak so I can view the reading on my smart phone.
+The sensor results are sent to a Mosquitto MQTT broker. From there a Python script running on the server sends the data to my home MySQL server for storage and also sent to ThingSpeak so I can view the reading on my smart phone.
+
+The original version of this program running on the perfboard version of the circuit worked pefrectly for weeks. Moving to a hard wired board and uploading the orignal version of the program doesn't work. When the ESP8266 returns from deepsleep, the DHT22 no longer sends data.
+Updates:
+I first tried to switch DHT libraries. From the ESP8266.com forum posters were saying they had success with the PietteTech DHT library. The version of code that I used for that experiment I did not publish since it didn't work. 
+In another post I see where another poster has had success with putting the DHTPIN as an output pin and setting it to LOW.
+
