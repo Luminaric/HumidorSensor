@@ -27,7 +27,11 @@
   2016-04-07
   Yet another poster reported that setting the DHTPIN
   as an OUTPUT and setting it state to LOW before calling
-  the sleep function work.
+  the sleep function work. -- Didn't fix the problem. I 
+  also found out that setting PIN2 low hangs the ESP
+  2016-04-08
+  Found in the Adafruit DHT library that the call to 
+  initilize the DHT class should have a ",15" passed.
  */
 
 #include <ESP8266WiFi.h>
@@ -38,13 +42,13 @@
 
 extern "C" {
 #include "user_interface.h"
-uint16 readvdd33(void);
+uint16 readvdd33(void);//Note, library has an API for doing this
 }
 #define DHTPIN                2
 #define DHTTYPE               DHT22
 #define SENSORID              "HUMIDOR"//change as required
 
-DHT dht(DHTPIN, DHTTYPE, 15);
+DHT dht(DHTPIN, DHTTYPE, 15);//Added this recommended by Adafruit library docs
 WiFiClient wireless;
 PubSubClient client(wireless);
 
@@ -80,7 +84,7 @@ void setup() {
   Serial.print(" is using Pin ");
   Serial.print(DHTPIN);
   Serial.println(" For DHT sensor.");
-  delay(2000);//added this 3/24 to see if a delay gives the sensor
+  //delay(2000);//added this 3/24 to see if a delay gives the sensor
               //a chance to get a good reading after recovering
               //from uP deep sleep.
   dht.begin();
@@ -104,8 +108,8 @@ void setup() {
   /* after deepsleep. Doing this with PIN2*/
   /* causes the ESP to lock up.           */  
   /*--------------------------------------*/
-  pinMode(DHTPIN, OUTPUT);
-  digitalWrite(DHTPIN, LOW);   
+  //pinMode(DHTPIN, OUTPUT);
+  //digitalWrite(DHTPIN, LOW);   
   /*--------------------------------------*/
   /*            Connect to MQTT           */
   /*--------------------------------------*/  
@@ -161,5 +165,4 @@ void setup() {
 
 void loop() {
   delay (10000);
-l
 }
