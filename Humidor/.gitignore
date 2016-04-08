@@ -1,0 +1,4 @@
+#My files to ignore
+
+ethernetSettings.h
+*.h
