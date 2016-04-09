@@ -62,7 +62,7 @@ bool dataFlag;
 void getData () {
   h = dht.readHumidity();
   t = dht.readTemperature(); 
-  if (!isnan(t) || !isnan(h) || !h == 0 || !t == 0) {   
+  if (!isnan(t) || !isnan(h)) {   
     Serial.print(h);Serial.print(" | ");Serial.println(t);
     dtostrf(h,4,1,humidity);
     dtostrf(t,4,1,temperatureC);
