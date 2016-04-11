@@ -32,6 +32,9 @@
   2016-04-08
   Found in the Adafruit DHT library that the call to 
   initilize the DHT class should have a ",15" passed.
+  2016-04-09
+  Going to see if a delay in the reading of the sensor helps.
+  
  */
 
 #include <ESP8266WiFi.h>
@@ -53,12 +56,14 @@ WiFiClient wireless;
 PubSubClient client(wireless);
 
 const char eStr[50] = " returned a invalid result";
-const unsigned long sleepTimeS = 3600;//60min = 3600, 30min = 1800
+const unsigned long sleepTimeS = 1800;//60min = 3600, 30min = 1800
 const unsigned long multiplier = 1000000;//cycles for one second
 char voltage[7],humidity[7],temperatureC[7];
 float h,t;
 bool dataFlag;
-
+void sendError()  {
+  
+}
 void getData () {
   h = dht.readHumidity();
   t = dht.readTemperature(); 
@@ -71,6 +76,7 @@ void getData () {
     return;
   }
   dataFlag = false;
+  sendError();
   //String eString ="Sensor had problems";
   //eString.toCharArray(error, 100);
   //humidity="0.00";temperature="0.00";
@@ -84,7 +90,7 @@ void setup() {
   Serial.print(" is using Pin ");
   Serial.print(DHTPIN);
   Serial.println(" For DHT sensor.");
-  //delay(2000);//added this 3/24 to see if a delay gives the sensor
+  //delay(10000);//added this 3/24 to see if a delay gives the sensor
               //a chance to get a good reading after recovering
               //from uP deep sleep.
   dht.begin();
