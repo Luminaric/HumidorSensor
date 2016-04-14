@@ -109,14 +109,6 @@ void setup() {
   /*--------------------------------------*/
   getData();
   /*--------------------------------------*/
-  /*           Put DHTPIN to LOW          */
-  /* Testing to see if DHT return values  */
-  /* after deepsleep. Doing this with PIN2*/
-  /* causes the ESP to lock up.           */  
-  /*--------------------------------------*/
-  //pinMode(DHTPIN, OUTPUT);
-  //digitalWrite(DHTPIN, LOW);   
-  /*--------------------------------------*/
   /*            Connect to MQTT           */
   /*--------------------------------------*/  
   if ( dataFlag == true)  {
