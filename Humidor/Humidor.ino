@@ -141,6 +141,12 @@ void setup() {
   logString += " Trasmission Successful";
   logString.toCharArray(pload, 50);
   client.publish("Log",pload);
+  String mqttHASS = temperatureC;
+  mqttHASS.toCharArray(pload, 50);
+  client.publish("humidor/temperature", pload);
+  mqttHASS = humidity;
+  mqttHASS.toCharArray(pload, 50);
+  client.publish("humidor/humidity", pload);
   } else if (dataFlag == false) {
       if(!client.connected()) {
         client.connect(SENSORID);
