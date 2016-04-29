@@ -34,7 +34,10 @@
   initilize the DHT class should have a ",15" passed.
   2016-04-09
   Going to see if a delay in the reading of the sensor helps.
-  
+  2016-04-205
+  This version is testing two changes. One I added a NPN transister 
+  to connect the DHT22 to GND when the ESP wakes up. Two, I set the 
+  DHT22 Pin to output and bring it low just before going to sleep
  */
 
 #include <ESP8266WiFi.h>
@@ -47,16 +50,17 @@ extern "C" {
 #include "user_interface.h"
 uint16 readvdd33(void);//Note, library has an API for doing this
 }
-#define DHTPIN                5
+#define DHTPIN                2
 #define DHTTYPE               DHT22
 #define SENSORID              "HUMIDOR"//change as required
+#define NPNPIN                4
 
 DHT dht(DHTPIN, DHTTYPE, 15);//Added this recommended by Adafruit library docs
 WiFiClient wireless;
 PubSubClient client(wireless);
 
 const char eStr[50] = " returned a invalid result";
-const unsigned long sleepTimeS = 60;//60min = 3600, 30min = 1800
+const unsigned long sleepTimeS = 1800;//60min = 3600, 30min = 1800
 const unsigned long multiplier = 1000000;//cycles for one second
 char voltage[7],humidity[7],temperatureC[7];
 float h,t;
@@ -85,10 +89,10 @@ void getData () {
   //humidity="0.00";temperature="0.00";
 }
 void setup() {
-  pinMode(4, OUTPUT);//npn pin
-  digitalWrite(4, HIGH);
+  pinMode(NPNPIN, OUTPUT);//npn pin
+  digitalWrite(NPNPIN, LOW);
   delay(500);
-  pinMode(4, LOW);
+  pinMode(NPNPIN, HIGH);
   delay(500);
   /*--------------------------------------*/
   /*      Send Sensor Info to Serial      */
@@ -169,7 +173,9 @@ void setup() {
       logString.toCharArray(pload, 50);
       client.publish("Log", pload);
   }
-  digitalWrite(4, HIGH);
+  digitalWrite(NPNPIN, LOW);// NPN Transister PIN
+  pinMode(DHTPIN, OUTPUT);  //DHT PIN
+  digitalWrite(DHTPIN, LOW);
   delay(1000);
   system_deep_sleep_set_option(0);
   system_deep_sleep((sleepTimeS * multiplier) - micros());
